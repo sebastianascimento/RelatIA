@@ -1,0 +1,52 @@
+{% extends 'analyzer/base.html' %}
+
+{% block title %}RelatIA - Home{% endblock %}
+
+{% block content %}
+<div class="text-center py-5">
+    <h1 class="display-4 fw-bold text-primary mb-4">RelatIA</h1>
+    <p class="lead mb-5">Upload your code files and get intelligent analysis from our AI agents</p>
+    
+    <div class="row justify-content-center">
+        <div class="col-md-8">
+            <div class="card mb-4">
+                <div class="card-body">
+                    <h5 class="card-title"><i class="bi bi-lightning-charge"></i> Powered by Three Specialized Agents</h5>
+                    <div class="row mt-4">
+                        <div class="col-md-4">
+                            <div class="p-3">
+                                <i class="bi bi-diagram-3 fs-1 text-primary"></i>
+                                <h5 class="mt-3">Structure Analysis</h5>
+                                <p class="text-muted">Evaluates code organization and architecture</p>
+                            </div>
+                        </div>
+                        <div class="col-md-4">
+                            <div class="p-3">
+                                <i class="bi bi-shield-check fs-1 text-success"></i>
+                                <h5 class="mt-3">Security Analysis</h5>
+                                <p class="text-muted">Identifies potential security vulnerabilities</p>
+                            </div>
+                        </div>
+                        <div class="col-md-4">
+                            <div class="p-3">
+                                <i class="bi bi-star fs-1 text-warning"></i>
+                                <h5 class="mt-3">Quality Analysis</h5>
+                                <p class="text-muted">Assesses code quality and maintainability</p>
+                            </div>
+                        </div>
+                    </div>
+                </div>
+            </div>
+            
+            <div class="d-grid gap-2 col-6 mx-auto">
+                <a href="{% url 'upload' %}" class="btn btn-primary btn-lg">
+                    <i class="bi bi-upload"></i> Upload File
+                </a>
+                <a href="{% url 'report_list' %}" class="btn btn-outline-secondary btn-lg">
+                    <i class="bi bi-list-ul"></i> View Reports
+                </a>
+            </div>
+        </div>
+    </div>
+</div>
+{% endblock %}
