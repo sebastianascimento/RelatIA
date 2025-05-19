@@ -10,6 +10,5 @@ urlpatterns = [
     path('reports/', ReportListView.as_view(), name='report_list'),
 ]
 
-# Add media URL mappings in development
 if settings.DEBUG:
     urlpatterns += static(settings.MEDIA_URL, document_root=settings.MEDIA_ROOT)

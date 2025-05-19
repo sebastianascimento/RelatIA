@@ -15,18 +15,18 @@ class FileUploadForm(forms.ModelForm):
         
         logger.debug(f"File validation: {file}")
         
-        # Validate file size (limit to 5MB)
         if file and file.size > 5 * 1024 * 1024:
             logger.error(f"File too large: {file.size} bytes")
             raise forms.ValidationError('File size cannot exceed 5MB')
         
-        # Validate file type
-        extension = os.path.splitext(file.name)[1].lower()
-        if extension not in ['.pdf', '.txt']:
-            logger.error(f"Unsupported file type: {extension}")
-            raise forms.ValidationError('Only PDF and TXT files are supported.')
+        allowed_extensions = ['.py', '.js', '.c', '.cpp', '.java', '.html', '.css', '.go', 
+                             '.php', '.rb', '.ts', '.swift', '.kt', '.rs', '.sh']
         
-        # Store additional file information
+        extension = os.path.splitext(file.name)[1].lower()
+        if extension not in allowed_extensions:
+            logger.error(f"Unsupported file type: {extension}")
+            raise forms.ValidationError(f'Only code files ({", ".join(allowed_extensions)}) are supported.')
+        
         self.instance.filename = file.name
         self.instance.content_type = file.content_type
         self.instance.file_size = file.size

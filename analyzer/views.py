@@ -1,3 +1,4 @@
+import logging
 from django.shortcuts import render, redirect, get_object_or_404
 from django.contrib import messages
 from django.views import View
@@ -7,7 +8,6 @@ from .models import UploadedFile, AnalysisResult, AnalysisReport
 from .forms import FileUploadForm
 from .ai_agents.crew_config import analyze_file
 import threading
-import logging
 
 logger = logging.getLogger(__name__)
 
@@ -29,14 +29,12 @@ class FileUploadView(View):
             try:
                 uploaded_file = form.save()
                 
-                # Create report entry with pending status
                 report = AnalysisReport.objects.create(
                     file=uploaded_file,
                     summary="Analysis in progress...",
                     status="processing"
                 )
                 
-                # Start analysis in background thread
                 threading.Thread(
                     target=self._process_file_analysis,
                     args=(uploaded_file,)
@@ -57,19 +55,15 @@ class FileUploadView(View):
     def _process_file_analysis(self, uploaded_file):
         """Process file analysis in background."""
         try:
-            # Read file content as binary (don't decode yet)
-            uploaded_file.file.seek(0)  # Make sure we're at the beginning of the file
+            uploaded_file.file.seek(0)  
             file_content = uploaded_file.file.read()
             
-            # Update report status
             report = AnalysisReport.objects.get(file=uploaded_file)
             report.status = "processing"
             report.save()
             
-            # Run AI analysis with filename parameter
             analysis_results = analyze_file(file_content, uploaded_file.filename)
             
-            # Store results
             for agent_type, result in analysis_results.items():
                 AnalysisResult.objects.create(
                     file=uploaded_file,
@@ -77,22 +71,18 @@ class FileUploadView(View):
                     result=result
                 )
             
-            # Generate summary from all analyses
             summary = f"Analysis completed for {uploaded_file.filename}.\n\n"
             summary += "Key findings:\n"
             for agent_type, result in analysis_results.items():
-                # Add a brief summary line for each analysis result
                 brief = result.split('\n')[0][:100] if result else "No results"
                 summary += f"\n• {agent_type.title()}: {brief}..."
             
-            # Update report with results
             report.summary = summary
             report.status = "completed"
             report.save()
             
         except Exception as e:
             logger.error(f"Analysis error: {str(e)}")
-            # Update report with error status
             report = AnalysisReport.objects.get(file=uploaded_file)
             report.status = "failed"
             report.summary = f"Error during analysis: {str(e)}"
@@ -103,9 +93,21 @@ class ReportView(View):
     """View for displaying analysis reports."""
     def get(self, request, report_id):
         report = get_object_or_404(AnalysisReport, id=report_id)
-        analyses = report.file.analyses.all()
         
-        # Prepare context with all information
+        analyses = AnalysisResult.objects.filter(file=report.file)
+        
+        logger.info(f"Report {report_id} for file {report.file.filename}:")
+        logger.info(f"Status: {report.status}")
+        logger.info(f"Summary length: {len(report.summary)} chars")
+        logger.info(f"Found {analyses.count()} analyses")
+        
+        for analysis in analyses:
+            logger.info(f"Analysis {analysis.id}: agent={analysis.agent}, result length={len(analysis.result)}")
+            if analysis.result:
+                logger.info(f"First 50 chars: {analysis.result[:50]}")
+            else:
+                logger.info("Empty result")
+        
         context = {
             'report': report,
             'analyses': analyses,
