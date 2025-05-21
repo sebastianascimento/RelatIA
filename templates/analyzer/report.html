@@ -10,6 +10,14 @@
     </a>
 </div>
 
+<!-- Debug Banner for Admin/Staff -->
+{% if request.user.is_staff or request.user.is_superuser %}
+    <div class="alert alert-info mb-4">
+        <p><strong>Debug info:</strong> Found {{ debug.analyses_count }} analyses.</p>
+        <p>Has analyses: {{ debug.has_analyses }}</p>
+    </div>
+{% endif %}
+
 <div class="card mb-4">
     <div class="card-header d-flex justify-content-between align-items-center">
         <div>
@@ -63,6 +71,15 @@
             </div>
             
             <h5 class="card-title">Detailed Analysis</h5>
+            
+            <!-- Se não houver análises, mostrar um aviso mais detalhado -->
+            {% if analyses|length == 0 %}
+                <div class="alert alert-warning">
+                    <i class="bi bi-exclamation-triangle me-2"></i> No analysis results available.
+                    <p class="small mt-2 mb-0">This might indicate a problem with the analysis process.</p>
+                </div>
+            {% endif %}
+            
             <div class="accordion" id="analysisAccordion">
                 {% for analysis in analyses %}
                     <div class="accordion-item">
@@ -82,6 +99,9 @@
                                 {% else %}
                                     <i class="bi bi-question-circle me-2 text-secondary"></i> {{ analysis.agent|title }} Analysis
                                 {% endif %}
+                                
+                                <!-- Adicionar indicador de comprimento -->
+                                <small class="ms-2 text-muted">({{ analysis.result|length }} chars)</small>
                             </button>
                         </h2>
                         <div id="collapse{{ forloop.counter }}" 
@@ -89,7 +109,13 @@
                              aria-labelledby="heading{{ forloop.counter }}" 
                              data-bs-parent="#analysisAccordion">
                             <div class="accordion-body">
-                                <pre class="analysis-text">{{ analysis.result }}</pre>
+                                {% if analysis.result|length > 0 %}
+                                    <div class="analysis-text" data-markdown-content>{{ analysis.result|safe }}</div>
+                                {% else %}
+                                    <div class="alert alert-warning">
+                                        No content available for this analysis.
+                                    </div>
+                                {% endif %}
                             </div>
                         </div>
                     </div>
@@ -99,6 +125,60 @@
                     </div>
                 {% endfor %}
             </div>
+            
+            {% if request.user.is_staff or request.user.is_superuser %}
+            <div class="card mt-4 border-info">
+                <div class="card-header bg-info text-white">
+                    <i class="bi bi-bug"></i> Debug Information (Admin Only)
+                </div>
+                <div class="card-body">
+                    <h6>Analysis Data:</h6>
+                    <p>Number of analyses: {{ analyses|length }}</p>
+                    
+                    <!-- Adicionar informações raw do debug -->
+                    {% if debug.raw_analyses %}
+                    <div class="mb-4">
+                        <h6>Raw Analysis Data:</h6>
+                        <div class="table-responsive">
+                            <table class="table table-sm table-bordered">
+                                <thead>
+                                    <tr>
+                                        <th>Agent</th>
+                                        <th>Length</th>
+                                        <th>Preview</th>
+                                    </tr>
+                                </thead>
+                                <tbody>
+                                    {% for raw in debug.raw_analyses %}
+                                    <tr>
+                                        <td>{{ raw.agent }}</td>
+                                        <td>{{ raw.length }}</td>
+                                        <td><code>{{ raw.preview|escape }}</code></td>
+                                    </tr>
+                                    {% endfor %}
+                                </tbody>
+                            </table>
+                        </div>
+                    </div>
+                    {% endif %}
+                    
+                    {% for analysis in analyses %}
+                    <div class="mb-4 p-3 border rounded">
+                        <h6>{{ analysis.agent|title }} Agent:</h6>
+                        <p>Result length: {{ analysis.result|length }} characters</p>
+                        <div>
+                            <strong>Raw preview:</strong>
+                            <pre class="bg-light p-2 mt-2" style="max-height: 200px; overflow-y: auto;">{{ analysis.result|escape|truncatechars:500 }}</pre>
+                        </div>
+                        <div>
+                            <strong>HTML entities:</strong>
+                            <pre class="bg-light p-2 mt-2" style="max-height: 200px; overflow-y: auto;">{{ analysis.result|escape|truncatechars:100 }}</pre>
+                        </div>
+                    </div>
+                    {% endfor %}
+                </div>
+            </div>
+            {% endif %}
         {% endif %}
     </div>
 </div>
@@ -107,12 +187,35 @@
 {% block extra_js %}
 {% if report.status == 'processing' %}
 <script>
-    // Auto-refresh the page every 5 seconds if the report is still processing
     setTimeout(function() {
         location.reload();
     }, 5000);
 </script>
 {% endif %}
+
+<!-- Adicionar biblioteca para processamento de Markdown -->
+<script src="https://cdn.jsdelivr.net/npm/markdown-it@12.0.6/dist/markdown-it.min.js"></script>
+<script>
+    document.addEventListener('DOMContentLoaded', function() {
+        // Inicializar o parser de Markdown
+        var md = window.markdownit({
+            html: true,
+            linkify: true,
+            typographer: true
+        });
+        
+        // Encontrar todos os elementos com classe analysis-text
+        var analysisElements = document.querySelectorAll('[data-markdown-content]');
+        
+        // Converter o conteúdo de cada elemento para HTML
+        analysisElements.forEach(function(element) {
+            var markdownContent = element.textContent;
+            var htmlContent = md.render(markdownContent);
+            element.innerHTML = htmlContent;
+        });
+    });
+</script>
+
 <style>
     .analysis-text {
         white-space: pre-wrap;
@@ -120,15 +223,77 @@
         font-size: 1rem;
         color: #212529;
         background-color: transparent;
-        border: none;
         padding: 0;
         margin-bottom: 0;
-        overflow: visible;
+    }
+    
+    .analysis-text ul, .analysis-text ol {
+        padding-left: 20px;
+        margin-bottom: 1rem;
+    }
+    
+    .analysis-text h1, .analysis-text h2, .analysis-text h3, 
+    .analysis-text h4, .analysis-text h5, .analysis-text h6 {
+        margin-top: 1rem;
+        margin-bottom: 0.5rem;
+        font-weight: 500;
+    }
+    
+    .analysis-text pre, .analysis-text code {
+        background-color: #f8f9fa;
+        border: 1px solid #eaeaea;
+        border-radius: 3px;
+        padding: 0.2rem 0.4rem;
+        font-family: monospace;
+    }
+    
+    .analysis-text pre {
+        padding: 0.5rem;
+        margin-bottom: 1rem;
+        overflow-x: auto;
     }
     
     .accordion-button:not(.collapsed) {
         background-color: #f8f9fa;
         color: #212529;
+    }
+    
+    .analysis-text strong {
+        font-weight: 600;
+    }
+    
+    .analysis-text table {
+        border-collapse: collapse;
+        margin-bottom: 1rem;
+        width: 100%;
+    }
+    
+    .analysis-text table, .analysis-text th, .analysis-text td {
+        border: 1px solid #dee2e6;
+        padding: 0.5rem;
+    }
+    
+    .analysis-text th {
+        background-color: #f8f9fa;
+        text-align: left;
+    }
+    
+    /* Estilos para conteúdo processado por markdown-it */
+    .analysis-text blockquote {
+        border-left: 4px solid #e9ecef;
+        padding-left: 1rem;
+        color: #6c757d;
+    }
+    
+    .analysis-text img {
+        max-width: 100%;
+        height: auto;
+    }
+    
+    .analysis-text hr {
+        margin: 1.5rem 0;
+        border: 0;
+        border-top: 1px solid rgba(0,0,0,.1);
     }
 </style>
 {% endblock %}

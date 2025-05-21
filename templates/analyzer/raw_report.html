@@ -1,0 +1,29 @@
+{% extends 'analyzer/base.html' %}
+
+{% block title %}Raw Analysis Data - RelatIA{% endblock %}
+
+{% block content %}
+<div class="container mt-5">
+    <h1>Raw Analysis Data</h1>
+    <p>Report ID: {{ report.id }}</p>
+    <p>Status: {{ report.status }}</p>
+    
+    <h2>Debug Info</h2>
+    <p>Has analyses: {{ debug.has_analyses }}</p>
+    <p>Analyses count: {{ debug.analyses_count }}</p>
+    
+    <h2>Analyses Raw Data</h2>
+    {% for analysis in analyses %}
+        <div style="margin: 20px 0; padding: 15px; border: 1px solid #ccc;">
+            <h3>Agent: {{ analysis.agent }}</h3>
+            <p>Result length: {{ analysis.result|length }} characters</p>
+            <div style="margin-top: 10px;">
+                <strong>Raw content:</strong>
+                <pre style="background-color: #f5f5f5; padding: 10px; white-space: pre-wrap;">{{ analysis.result|escape }}</pre>
+            </div>
+        </div>
+    {% empty %}
+        <p>No analyses found.</p>
+    {% endfor %}
+</div>
+{% endblock %}

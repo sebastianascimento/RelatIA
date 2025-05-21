@@ -41,9 +41,14 @@
                                     </span>
                                 </td>
                                 <td>
-                                    <a href="{% url 'report' report.id %}" class="btn btn-sm btn-primary">
-                                        <i class="bi bi-eye"></i> View
-                                    </a>
+                                    <div class="btn-group">
+                                        <a href="{% url 'report' report.id %}" class="btn btn-sm btn-primary">
+                                            <i class="bi bi-eye"></i> View
+                                        </a>
+                                        <a href="{% url 'report_delete' report.id %}" class="btn btn-sm btn-danger">
+                                            <i class="bi bi-trash"></i> Delete
+                                        </a>
+                                    </div>
                                 </td>
                             </tr>
                         {% endfor %}

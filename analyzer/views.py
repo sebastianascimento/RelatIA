@@ -65,11 +65,19 @@ class FileUploadView(View):
             analysis_results = analyze_file(file_content, uploaded_file.filename)
             
             for agent_type, result in analysis_results.items():
-                AnalysisResult.objects.create(
+                # Log detalhado antes do salvamento
+                print(f"DEBUG: Salvando resultado para {agent_type}, tamanho: {len(result or '')}")
+                
+                # Garantir que result seja uma string e não None
+                safe_result = str(result) if result is not None else "No result generated"
+                
+                # Criar o objeto e verificar se foi salvo corretamente
+                analysis = AnalysisResult.objects.create(
                     file=uploaded_file,
                     agent=agent_type,
-                    result=result
+                    result=safe_result
                 )
+                print(f"DEBUG: Resultado salvo, ID={analysis.id}, tamanho={len(analysis.result)}")
             
             summary = f"Analysis completed for {uploaded_file.filename}.\n\n"
             summary += "Key findings:\n"
@@ -101,20 +109,58 @@ class ReportView(View):
         logger.info(f"Summary length: {len(report.summary)} chars")
         logger.info(f"Found {analyses.count()} analyses")
         
+        # Modificação principal aqui - processar TODOS os resultados
+        processed_analyses = []
         for analysis in analyses:
             logger.info(f"Analysis {analysis.id}: agent={analysis.agent}, result length={len(analysis.result)}")
-            if analysis.result:
-                logger.info(f"First 50 chars: {analysis.result[:50]}")
-            else:
-                logger.info("Empty result")
+            
+            # Normalizar quebras de linha, mas não filtrar resultados vazios
+            result = analysis.result.replace('\r\n', '\n') if analysis.result else "No result available"
+            analysis.result = result
+            processed_analyses.append(analysis)
+            
+            # Log mais detalhado para diagnóstico
+            logger.info(f"Processed result for {analysis.agent}, length: {len(result)}")
+            logger.info(f"First 30 chars: '{result[:30]}'")
+        
+        context = {
+            'report': report,
+            'analyses': processed_analyses,  
+            'file': report.file,
+            'debug': {
+                'has_analyses': len(processed_analyses) > 0,
+                'analyses_count': len(processed_analyses),
+                'raw_analyses': [
+                    {
+                        'agent': a.agent,
+                        'length': len(a.result),
+                        'preview': a.result[:50]
+                    } for a in processed_analyses
+                ]
+            }
+        }
+        
+        return render(request, 'analyzer/report.html', context)
+    
+
+class RawReportView(View):
+    """View for displaying raw analysis data."""
+    def get(self, request, report_id):
+        report = get_object_or_404(AnalysisReport, id=report_id)
+        
+        analyses = AnalysisResult.objects.filter(file=report.file)
         
         context = {
             'report': report,
             'analyses': analyses,
             'file': report.file,
+            'debug': {
+                'has_analyses': analyses.exists(),
+                'analyses_count': analyses.count(),
+            }
         }
         
-        return render(request, 'analyzer/report.html', context)
+        return render(request, 'analyzer/raw_report.html', context)
 
 
 class ReportListView(View):
@@ -122,3 +168,26 @@ class ReportListView(View):
     def get(self, request):
         reports = AnalysisReport.objects.all().order_by('-created_at')
         return render(request, 'analyzer/report_list.html', {'reports': reports})
+    
+
+class ReportDeleteView(View):
+    """View for deleting reports."""
+    def get(self, request, report_id):
+        report = get_object_or_404(AnalysisReport, id=report_id)
+        return render(request, 'analyzer/confirm_delete.html', {'report': report})
+    
+    def post(self, request, report_id):
+        report = get_object_or_404(AnalysisReport, id=report_id)
+        filename = report.file.filename
+        
+        # Exclui o arquivo associado também
+        uploaded_file = report.file
+        
+        # Primeiro exclui o relatório
+        report.delete()
+        
+        # Depois exclui o arquivo (para evitar problemas de integridade referencial)
+        uploaded_file.delete()
+        
+        messages.success(request, f'Relatório "{filename}" excluído com sucesso.')
+        return redirect('report_list')

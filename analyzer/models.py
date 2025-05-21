@@ -8,7 +8,7 @@ class UploadedFile(models.Model):
     filename = models.CharField(max_length=255)
     uploaded_at = models.DateTimeField(default=timezone.now)
     content_type = models.CharField(max_length=100)
-    file_size = models.PositiveIntegerField()  # Size in bytes
+    file_size = models.PositiveIntegerField()  
     
     def __str__(self):
         return self.filename
@@ -36,6 +36,7 @@ class AnalysisReport(models.Model):
     file = models.OneToOneField(UploadedFile, on_delete=models.CASCADE, related_name='report')
     summary = models.TextField()
     created_at = models.DateTimeField(default=timezone.now)
+    updated_at = models.DateTimeField(auto_now=True) 
     status = models.CharField(max_length=20, default='pending', 
                              choices=(('pending', 'Pending'), 
                                       ('processing', 'Processing'),
