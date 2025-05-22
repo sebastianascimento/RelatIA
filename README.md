@@ -13,7 +13,6 @@ RelatIA é uma plataforma que utiliza agentes de IA (com Crew AI) para analisar 
 
 - [Arquitetura do Sistema](docs/architecture.md) - Detalhes técnicos da arquitetura
 - [Guia de Instalação](docs/installation.md) - Como instalar e configurar o RelatIA
-- [Guia do Usuário](docs/user_guide.md) - Como usar a plataforma
 - [Desafios de Implementação](docs/challenges.md) - Desafios enfrentados e soluções
 
 ## Começando Rapidamente
