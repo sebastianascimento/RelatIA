@@ -22,7 +22,7 @@ class TaskFactory:
             Provide a detailed analysis with specific examples from the code.
             """,
             agent=agent,
-            expected_output="A comprehensive analysis of the code structure with strengths and suggestions for improvement."
+            expected_output="A comprehensive analysis of the code structure with strengths and suggestions for improvement.",
         )
 
     def create_security_analysis_task(self, agent, file_content):
@@ -45,7 +45,7 @@ class TaskFactory:
             Provide a detailed security analysis with specific vulnerabilities found (if any) and recommendations.
             """,
             agent=agent,
-            expected_output="A detailed security analysis highlighting potential vulnerabilities and remediation steps."
+            expected_output="A detailed security analysis highlighting potential vulnerabilities and remediation steps.",
         )
 
     def create_quality_analysis_task(self, agent, file_content):
@@ -68,5 +68,5 @@ class TaskFactory:
             Provide a detailed quality analysis with examples and suggestions for improvement.
             """,
             agent=agent,
-            expected_output="A comprehensive code quality assessment with specific examples and recommendations."
+            expected_output="A comprehensive code quality assessment with specific examples and recommendations.",
         )
