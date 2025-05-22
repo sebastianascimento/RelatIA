@@ -8,6 +8,7 @@ from .models import UploadedFile, AnalysisResult, AnalysisReport
 from .forms import FileUploadForm
 from .ai_agents.crew_config import analyze_file
 import threading
+import sys
 
 logger = logging.getLogger(__name__)
 
@@ -35,10 +36,16 @@ class FileUploadView(View):
                     status="processing"
                 )
                 
-                threading.Thread(
-                    target=self._process_file_analysis,
-                    args=(uploaded_file,)
-                ).start()
+                # Verificar se estamos em modo de teste para evitar threads durante testes
+                if 'test' in sys.argv:
+                    # Em testes, executar diretamente sem thread
+                    self._process_file_analysis(uploaded_file)
+                else:
+                    # Em produção, usar thread normalmente
+                    threading.Thread(
+                        target=self._process_file_analysis,
+                        args=(uploaded_file,)
+                    ).start()
                 
                 messages.success(request, 'File uploaded successfully! Analysis in progress...')
                 return HttpResponseRedirect(reverse('report', args=[report.id]))
@@ -58,7 +65,13 @@ class FileUploadView(View):
             uploaded_file.file.seek(0)  
             file_content = uploaded_file.file.read()
             
-            report = AnalysisReport.objects.get(file=uploaded_file)
+            # Verificar se o relatório existe antes de prosseguir
+            try:
+                report = AnalysisReport.objects.get(file=uploaded_file)
+            except AnalysisReport.DoesNotExist:
+                logger.error(f"Report not found for file {uploaded_file.filename}. Aborting analysis.")
+                return  # Encerra a função se o relatório não for encontrado
+            
             report.status = "processing"
             report.save()
             
@@ -91,10 +104,14 @@ class FileUploadView(View):
             
         except Exception as e:
             logger.error(f"Analysis error: {str(e)}")
-            report = AnalysisReport.objects.get(file=uploaded_file)
-            report.status = "failed"
-            report.summary = f"Error during analysis: {str(e)}"
-            report.save()
+            try:
+                report = AnalysisReport.objects.get(file=uploaded_file)
+                report.status = "failed"
+                report.summary = f"Error during analysis: {str(e)}"
+                report.save()
+            except AnalysisReport.DoesNotExist:
+                # Se o relatório não existe, apenas registra o erro e não tenta atualizá-lo
+                logger.error(f"Failed to update report status: Report not found for {uploaded_file.filename}")
 
 
 class ReportView(View):
