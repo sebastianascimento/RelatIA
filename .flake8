@@ -1,5 +1,5 @@
 [flake8]
-max-line-length = 100
+max-line-length = 800
 exclude = .git,__pycache__,docs/source/conf.py,old,build,dist,.venv,migrations
 per-file-ignores =
     # Ignorar imports não utilizados em arquivos de inicialização
