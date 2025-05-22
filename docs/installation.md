@@ -16,7 +16,7 @@ Este guia fornece instruções detalhadas para instalar e configurar o RelatIA e
 git clone https://github.com/seu-usuario/RelatIA.git
 cd RelatIA
 
-# Configure e inicie os serviços
+# Configure e inicie os serviço
 make setup
 
 # Acesse a aplicação
