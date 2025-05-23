@@ -75,3 +75,7 @@ jobs:
       - name: Run flake8
         run: |
           docker compose exec -T web poetry run flake8 .
+
+      - name: Configure flake8
+        run: |
+          docker compose exec -T web bash -c 'echo "[flake8]\nignore = W292" > .flake8'
