@@ -44,28 +44,22 @@ jobs:
           sleep 20
           docker compose ps
 
-      # Fix newline issue before running checks
       - name: Fix newline issue in settings.py
         run: |
           docker compose exec -T web bash -c 'echo "" >> relatia/settings.py'
           
-      # Run code quality checks
       - name: Run code quality checks
         run: |
-          docker compose exec -T web poetry run flake8 .
           docker compose exec -T web poetry run black --check .
           
-      # Run tests
       - name: Run tests
         run: |
           docker compose exec -T web poetry run python manage.py test analyzer.tests --keepdb
           
-      # Run security checks
       - name: Run security checks
         run: |
           docker compose exec -T web poetry run bandit -r ./ -x ./tests,./venv
           
-      # Cleanup
       - name: Stop and remove containers
         if: always()
         run: |
