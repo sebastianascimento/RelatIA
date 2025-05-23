@@ -97,3 +97,13 @@ MEDIA_ROOT = os.path.join(BASE_DIR, "media")
 
 # Default primary key field type
 DEFAULT_AUTO_FIELD = "django.db.models.BigAutoField"
+
+
+ALLOWED_HOSTS = []
+
+# Ambiente de desenvolvimento
+if os.environ.get('DJANGO_ENV') == 'development':
+    ALLOWED_HOSTS = ["localhost", "127.0.0.1"]
+elif os.environ.get('DJANGO_ENV') == 'production':
+    # Em produção, defina os hosts específicos permitidos
+    ALLOWED_HOSTS = os.environ.get('ALLOWED_HOSTS', '').split(',')
