@@ -1,8 +1,5 @@
 [flake8]
-max-line-length = 800
-exclude = .git,__pycache__,docs/source/conf.py,old,build,dist,.venv,migrations
+ignore = W292
 per-file-ignores =
-    # Ignorar imports não utilizados em arquivos de inicialização
     __init__.py: F401
     */migrations/*.py: E501
-    ignore = W292
