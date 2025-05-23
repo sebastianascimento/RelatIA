@@ -14,8 +14,6 @@ SECRET_KEY = os.environ.get("SECRET_KEY", "django-insecure-default-key")
 # SECURITY WARNING: don't run with debug turned on in production!
 DEBUG = os.environ.get("DEBUG", "False") == "True"
 
-ALLOWED_HOSTS = ["localhost", "127.0.0.1", "0.0.0.0"]
-
 # Application definition
 INSTALLED_APPS = [
     "django.contrib.admin",
@@ -98,12 +96,12 @@ MEDIA_ROOT = os.path.join(BASE_DIR, "media")
 # Default primary key field type
 DEFAULT_AUTO_FIELD = "django.db.models.BigAutoField"
 
-
+# Host configuration based on environment
 ALLOWED_HOSTS = []
 
-# Ambiente de desenvolvimento
+# Environment-specific settings
 if os.environ.get('DJANGO_ENV') == 'development':
     ALLOWED_HOSTS = ["localhost", "127.0.0.1"]
 elif os.environ.get('DJANGO_ENV') == 'production':
-    # Em produção, defina os hosts específicos permitidos
+    # In production, set specific allowed hosts
     ALLOWED_HOSTS = os.environ.get('ALLOWED_HOSTS', '').split(',')
