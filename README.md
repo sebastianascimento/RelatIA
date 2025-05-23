@@ -22,7 +22,7 @@ RelatIA é uma plataforma que utiliza agentes de IA (com Crew AI) para analisar 
 git clone https://github.com/seu-usuario/RelatIA.git
 cd RelatIA
 
-# Configure e inicie os serviços
+# Configure e inicie os serviço
 make setup
 
 # Acesse a aplicação
