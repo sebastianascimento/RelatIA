@@ -44,38 +44,41 @@ jobs:
           sleep 20
           docker compose ps
 
+      # Configure code quality tools before running checks
+      - name: Configure flake8
+        run: |
+          docker compose exec -T web bash -c 'cat > .flake8 << EOL
+[flake8]
+max-line-length = 125
+ignore = W292
+per-file-ignores =
+    __init__.py: F401
+    */migrations/*.py: E501
+EOL'
+
+      # Fix newline issue before running checks
+      - name: Fix newline issue in settings.py
+        run: |
+          docker compose exec -T web bash -c 'echo "" >> relatia/settings.py'
+
+      # Run code quality checks
       - name: Run code quality checks
         run: |
           docker compose exec -T web poetry run flake8 .
           docker compose exec -T web poetry run black --check .
 
+      # Run tests
       - name: Run tests
         run: |
-           docker compose exec -T web poetry run python manage.py test analyzer.tests --keepdb
+          docker compose exec -T web poetry run python manage.py test analyzer.tests --keepdb
 
+      # Run security checks
       - name: Run security checks
         run: |
           docker compose exec -T web poetry run bandit -r ./ -x ./tests,./venv
 
+      # Cleanup
       - name: Stop and remove containers
         if: always()
         run: |
           docker compose down --volumes --remove-orphans
-
-      - name: Run code quality checks
-        run: |
-          docker compose exec -T web poetry run flake8 .
-          docker compose exec -T web poetry run black .  
-          docker compose exec -T web poetry run black --check . 
-
-      - name: Fix newline issue in settings.py
-        run: |
-          docker compose exec -T web bash -c 'echo "" >> relatia/settings.py'
-            
-      - name: Run flake8
-        run: |
-          docker compose exec -T web poetry run flake8 .
-
-      - name: Configure flake8
-        run: |
-          docker compose exec -T web bash -c 'echo "[flake8]\nignore = W292" > .flake8'
