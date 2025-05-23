@@ -10,7 +10,6 @@
     </a>
 </div>
 
-<!-- Debug Banner for Admin/Staff -->
 {% if request.user.is_staff or request.user.is_superuser %}
     <div class="alert alert-info mb-4">
         <p><strong>Debug info:</strong> Found {{ debug.analyses_count }} analyses.</p>
@@ -72,7 +71,6 @@
             
             <h5 class="card-title">Detailed Analysis</h5>
             
-            <!-- Se não houver análises, mostrar um aviso mais detalhado -->
             {% if analyses|length == 0 %}
                 <div class="alert alert-warning">
                     <i class="bi bi-exclamation-triangle me-2"></i> No analysis results available.
@@ -100,7 +98,6 @@
                                     <i class="bi bi-question-circle me-2 text-secondary"></i> {{ analysis.agent|title }} Analysis
                                 {% endif %}
                                 
-                                <!-- Adicionar indicador de comprimento -->
                                 <small class="ms-2 text-muted">({{ analysis.result|length }} chars)</small>
                             </button>
                         </h2>
@@ -193,21 +190,17 @@
 </script>
 {% endif %}
 
-<!-- Adicionar biblioteca para processamento de Markdown -->
 <script src="https://cdn.jsdelivr.net/npm/markdown-it@12.0.6/dist/markdown-it.min.js"></script>
 <script>
     document.addEventListener('DOMContentLoaded', function() {
-        // Inicializar o parser de Markdown
         var md = window.markdownit({
             html: true,
             linkify: true,
             typographer: true
         });
         
-        // Encontrar todos os elementos com classe analysis-text
         var analysisElements = document.querySelectorAll('[data-markdown-content]');
         
-        // Converter o conteúdo de cada elemento para HTML
         analysisElements.forEach(function(element) {
             var markdownContent = element.textContent;
             var htmlContent = md.render(markdownContent);
@@ -278,7 +271,6 @@
         text-align: left;
     }
     
-    /* Estilos para conteúdo processado por markdown-it */
     .analysis-text blockquote {
         border-left: 4px solid #e9ecef;
         padding-left: 1rem;

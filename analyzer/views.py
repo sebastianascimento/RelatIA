@@ -39,12 +39,9 @@ class FileUploadView(View):
                     status="processing",
                 )
 
-                # Verificar se estamos em modo de teste para evitar threads durante testes
                 if "test" in sys.argv:
-                    # Em testes, executar diretamente sem thread
                     self._process_file_analysis(uploaded_file)
                 else:
-                    # Em produção, usar thread normalmente
                     threading.Thread(
                         target=self._process_file_analysis, args=(uploaded_file,)
                     ).start()
@@ -69,14 +66,13 @@ class FileUploadView(View):
             uploaded_file.file.seek(0)
             file_content = uploaded_file.file.read()
 
-            # Verificar se o relatório existe antes de prosseguir
             try:
                 report = AnalysisReport.objects.get(file=uploaded_file)
             except AnalysisReport.DoesNotExist:
                 logger.error(
                     f"Report not found for file {uploaded_file.filename}. Aborting analysis."
                 )
-                return  # Encerra a função se o relatório não for encontrado
+                return  
 
             report.status = "processing"
             report.save()
@@ -84,17 +80,14 @@ class FileUploadView(View):
             analysis_results = analyze_file(file_content, uploaded_file.filename)
 
             for agent_type, result in analysis_results.items():
-                # Log detalhado antes do salvamento
                 print(
                     f"DEBUG: Salvando resultado para {agent_type}, tamanho: {len(result or '')}"
                 )
 
-                # Garantir que result seja uma string e não None
                 safe_result = (
                     str(result) if result is not None else "No result generated"
                 )
 
-                # Criar o objeto e verificar se foi salvo corretamente
                 analysis = AnalysisResult.objects.create(
                     file=uploaded_file, agent=agent_type, result=safe_result
                 )
@@ -120,7 +113,6 @@ class FileUploadView(View):
                 report.summary = f"Error during analysis: {str(e)}"
                 report.save()
             except AnalysisReport.DoesNotExist:
-                # Se o relatório não existe, apenas registra o erro e não tenta atualizá-lo
                 logger.error(
                     f"Failed to update report status: Report not found for {uploaded_file.filename}"
                 )
@@ -139,14 +131,12 @@ class ReportView(View):
         logger.info(f"Summary length: {len(report.summary)} chars")
         logger.info(f"Found {analyses.count()} analyses")
 
-        # Modificação principal aqui - processar TODOS os resultados
         processed_analyses = []
         for analysis in analyses:
             logger.info(
                 f"Analysis {analysis.id}: agent={analysis.agent}, result length={len(analysis.result)}"
             )
 
-            # Normalizar quebras de linha, mas não filtrar resultados vazios
             result = (
                 analysis.result.replace("\r\n", "\n")
                 if analysis.result
@@ -155,7 +145,6 @@ class ReportView(View):
             analysis.result = result
             processed_analyses.append(analysis)
 
-            # Log mais detalhado para diagnóstico
             logger.info(f"Processed result for {analysis.agent}, length: {len(result)}")
             logger.info(f"First 30 chars: '{result[:30]}'")
 
@@ -220,13 +209,10 @@ class ReportDeleteView(View):
         report = get_object_or_404(AnalysisReport, id=report_id)
         filename = report.file.filename
 
-        # Exclui o arquivo associado também
         uploaded_file = report.file
 
-        # Primeiro exclui o relatório
         report.delete()
 
-        # Depois exclui o arquivo (para evitar problemas de integridade referencial)
         uploaded_file.delete()
 
         messages.success(request, f'Relatório "{filename}" excluído com sucesso.')
