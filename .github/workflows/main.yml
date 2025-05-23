@@ -51,7 +51,7 @@ jobs:
 
       - name: Run tests
         run: |
-          docker compose exec -T web make test
+           docker compose exec -T web poetry run python manage.py test analyzer.tests --keepdb
 
       - name: Run security checks
         run: |
