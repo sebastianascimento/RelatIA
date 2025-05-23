@@ -67,3 +67,11 @@ jobs:
           docker compose exec -T web poetry run flake8 .
           docker compose exec -T web poetry run black .  
           docker compose exec -T web poetry run black --check . 
+
+      - name: Fix newline issue in settings.py
+        run: |
+          docker compose exec -T web bash -c 'echo "" >> relatia/settings.py'
+            
+      - name: Run flake8
+        run: |
+          docker compose exec -T web poetry run flake8 .
