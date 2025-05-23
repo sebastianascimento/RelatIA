@@ -43,16 +43,6 @@ jobs:
         run: |
           sleep 20
           docker compose ps
-          
-      # Configure code quality tools before running checks
-      - name: Configure flake8
-        run: >
-          docker compose exec -T web bash -c "echo '[flake8]
-          max-line-length = 125
-          ignore = W292
-          per-file-ignores =
-              __init__.py: F401
-              */migrations/*.py: E501' > .flake8"
 
       # Fix newline issue before running checks
       - name: Fix newline issue in settings.py
